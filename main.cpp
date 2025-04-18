@@ -69,12 +69,27 @@ int main(int argc, char *argv[])
 	//
   auto start = chrono::high_resolution_clock::now();
 
-	// #pragma omp parallel for num_threads(_numThreads)
-	#pragma omp parallel for schedule(dynamic) num_threads(_numThreads) collapse(2)
+	// #pragma omp parallel for num_threads(_numThreads) // basic, non-linear
+	#pragma omp parallel for schedule(dynamic) num_threads(_numThreads) // dynamic scheduling, still not quite linear speedup
+	// #pragma omp parallel for schedule(dynamic) num_threads(_numThreads) collapse(2) // can't use collapse :( but it is near-linear
 
+	// use alloc2D for part 2 cus why else would we have it?
+
+	for (int i = 0; i < wm.num_rows() * wm.num_cols(); i++) {
+		// same as collapse just manual
+		wm.do_work(i / wm.num_cols(), i % wm.num_cols());
+		
+		cells++; // don't need atomic here?
+
+		if (cells % 100 == 0) {
+			cout << ".";
+			cout.flush();
+		}
+	}
+/*
+//original code for reference:
 	for (int r = 0; r < wm.num_rows(); r++) {
 		for (int c = 0; c < wm.num_cols(); c++) {
-
 			//
 			// this solves the work in cell [r][c]:
 			//
@@ -83,7 +98,6 @@ int main(int argc, char *argv[])
 			//
 			// show some output every 100 cells so we see progress:
 			//
-			// #pragma omp atomic
 			cells++;
 
 			if (cells % 100 == 0) {
@@ -92,7 +106,8 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-  
+*/
+
   auto stop = chrono::high_resolution_clock::now();
   auto diff = stop - start;
   auto duration = chrono::duration_cast<chrono::milliseconds>(diff);
